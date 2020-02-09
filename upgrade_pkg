@@ -1,0 +1,5 @@
+#!/bin/sh
+
+for i in plex plex_2 transmission; do
+  iocage exec $i "pkg upgrade -y"
+done   
