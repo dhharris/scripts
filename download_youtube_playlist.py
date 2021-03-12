@@ -10,15 +10,13 @@ import subprocess
 import sys
 from typing import List
 
-scopes = ["https://www.googleapis.com/auth/youtube.readonly"]
 packages = [
     "grequests",
     "google-api-python-client",
-    "google-auth-oauthlib google-auth-httplib2",
 ]
 
 
-def update_api_libs():
+def update_packages():
     FNULL = open(os.devnull, "w")
     args = "-m pip install {} --upgrade"
     for pkg in packages:
@@ -71,8 +69,11 @@ def download_videos(video_ids: List[str]):
     )
     results = grequests.map(requests, size=5)
 
-    good_status = [i for i in results if i.status_code == 200]
-    succeeded = [i for i in results if i.text]  # text should be non-empty
+    bad_status = [i for i in results if i.status_code != 200]
+    if bad_status:
+        print("Unexpected status code(s) returned from youtube-dl-api server:")
+        print(bad_status)
+    succeeded = [i for i in results if "success" in i.text]
     if len(succeeded) != len(video_ids):
         print("Some requests did not succeed")
     else:
@@ -86,10 +87,10 @@ Downloads videos from the given YouTube playlist
 """
     )
     parser.add_argument(
-        "playlist_id", metavar="id", type=str, nargs=1, help="IDs of a YouTube playlist"
+        "playlist_id", metavar="id", type=str, nargs=1, help="ID of a YouTube playlist"
     )
     args = parser.parse_args()
-    update_api_libs()
+    update_packages()
     videos = get_playlist_video_ids(args.playlist_id[0])
     download_videos(videos)
 
